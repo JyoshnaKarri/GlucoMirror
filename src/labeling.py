@@ -13,6 +13,7 @@ def label_spike(df: pd.DataFrame, horizon_min: int = HORIZON_MIN,
     """
     df columns: patient_id, timestamp, cgm_mgdl
     Adds: label (0/1) - whether a spike occurs within horizon_min after this row.
+    Patient_id remains a column in the output, for both tiny and large inputs.
     """
     df = df.sort_values(["patient_id", "timestamp"]).copy()
     df["label"] = 0
@@ -27,16 +28,29 @@ def label_spike(df: pd.DataFrame, horizon_min: int = HORIZON_MIN,
             labels.append(1 if mask.any() else 0)
         return g.assign(label=labels)
 
-    df = df.groupby("patient_id", group_keys=True).apply(_label_group)
-    df = df.reset_index(level=0)
-    df = df.reset_index(drop=True)
-    if "patient_id" not in df.columns and "level_0" in df.columns:
-        df = df.rename(columns={"level_0": "patient_id"})
+    # Remember whether patient_id is a column before groupby
+    has_pid_col = "patient_id" in df.columns
 
-    pos = df["label"].mean()
+    result = df.groupby("patient_id", group_keys=False).apply(_label_group)
+    result = result.reset_index(drop=True)
+
+    # Restore patient_id as a column if it got moved into the index
+    if "patient_id" not in result.columns:
+        if "patient_id" in result.index.names:
+            result = result.reset_index()
+        elif has_pid_col:
+            # Fallback: pull back from the original df by row alignment
+            result = result.reset_index()
+            if "level_0" in result.columns and "patient_id" not in result.columns:
+                result = result.rename(columns={"level_0": "patient_id"})
+
+    if "label" not in result.columns:
+        raise RuntimeError("label column missing after labeling")
+
+    pos = result["label"].mean()
     print(f"Label created. Positive rate (spike in next {horizon_min} min): {pos:.2%}")
     if pos < 0.02:
         print("WARNING: very few positives - lower threshold or widen horizon.")
     if pos > 0.40:
         print("WARNING: too many positives - tighten horizon.")
-    return df
+    return result
