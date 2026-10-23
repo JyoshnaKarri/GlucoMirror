@@ -1,22 +1,23 @@
-﻿__pycache__/
+__pycache__/
 *.pyc
 *.pyo
 .ipynb_checkpoints/
 .venv/
 venv/
 
+# Data (regenerated via synthetic_cgm.py)
 data/raw/
 data/synthetic_ehr/*
 data/wearable_ts/*
 !data/samples/*.csv
 
-models/*.pkl
-models/*.pt
+# Checkpoints only (model .pt files are committed for reproducibility)
 models/*.h5
+models/*.ckpt
+models/checkpoint_*
 
 .env
 *.key
-
 .DS_Store
 .vscode/
 .idea/
