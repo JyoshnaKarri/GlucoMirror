@@ -44,3 +44,10 @@ See docs/architecture.pdf
 
 ## License
 MIT — see LICENSE.
+
+## Dashboard Preview
+
+![GlucoMirror Dashboard](docs/dashboard_screenshot.jpeg)
+
+The dashboard shows per-patient risk score, 24h CGM trend with spike threshold,
+top risk drivers, and a what-if intervention slider.
